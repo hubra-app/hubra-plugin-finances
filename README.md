@@ -1,108 +1,53 @@
-# Hubra plugin template
+# Finances
 
-Start a new [Hubra](https://hubra.club) plugin from here. The template is a
-small plugin that works and uses every part a plugin has: a notice board
-with one table, an API, a screen in the club app, a module setting, a
-migration, tests, and the workflow that tests, signs and releases it.
+The club's books for [Hubra](https://hubra.club): transactions and their
+categories, the overview with this month's figures and the last twelve
+months, recurring bookings, the monthly account statement and the annual
+accounts (Jahresrechnung) with a chart of accounts.
 
-**Plugin id** `example` · **Package** `hubra_example` · **Module** `example` · **Works with** Hubra `>=0.2,<1`
+Invoices, reminders, the Swiss QR-bill, membership fees, the fee basis and
+external parties stay in Hubra's Finance module. With this plugin on, every
+invoice books its income here, and paying the invoice completes the booking.
 
-## Make a new plugin
+**Plugin id** `finances` · **Package** `hubra_finances` · **Module** `finance.books` (needs `finance`) · **Works with** Hubra `>=0.2,<1`
 
-1. **Create the repository.** Click **Use this template** and name it
-   `hubra-plugin-<id>` in `hubra-app`. The Marketplace
-   ([hubra-app/hubra-plugins](https://github.com/hubra-app/hubra-plugins))
-   lists every public `hubra-plugin-*` repository there once it has a release.
-2. **Rename everything called example.** Use the same name in every place:
+## Coming from Hubra's built-in books
 
-   | Where | Example | Yours |
-   | --- | --- | --- |
-   | `plugin.yaml` `id`, `name`, `description`, `homepage`, `tags` | `example` | `<id>` |
-   | Package folder and `package:` (must start with `hubra_`) | `hubra_example` | `hubra_<name>` |
-   | Module code (`plugin.yaml` `modules:`, `Module(code=...)`, `module:` in `frontend/src/index.tsx`) | `example` | must not clash with a Hubra module |
-   | Blueprint name, which sets the permission prefix | `example_bp` gives `example.notes.read` | `<name>_bp` |
-   | Table names, in `models.py`, `tables=` and the migration | `example_notes` | prefix them with your id |
-   | API path | `/api/v1/example` | `/api/v1/<id>` |
-   | Club-app route and nav entry | `/app/example` | |
-   | Translations (`shell.nav.example`, `example.*`) | | |
+These pages were part of Hubra's Finance module up to 0.x. Nothing moves in
+the database: the tables, the API paths (`/api/v1/app/finance/...`) and the
+permission keys (`finance.transactions.*`, `finance.overview.read`,
+`finance.accounts.*`, ...) stay the same, so clubs keep their books and
+roles keep their rights.
 
-   Then replace the migration with your own (`0a1b2c3d4e5f_example_notes.py`)
-   and set `version: "1.0.0"` and the first `CHANGELOG.md` entry.
-3. **Set up the repository** (Settings):
-   - **Rules › Rulesets › Import a ruleset:** import both files from
-     [`.github/rulesets/`](.github/rulesets/). `main.json` protects `main`
-     (pull request, required check `test`, no force push or delete);
-     `tags.json` makes `v*` tags permanent once published.
-   - **Environments › New environment** `plugin-signing`: add the secret
-     `HUBRA_SIGNING_KEY` (the official plugin key; never a repository or
-     organisation secret), add yourself as required reviewer, and limit
-     deployment to tags `v*`.
-   - Optional repository secret `MARKETPLACE_TOKEN` (Actions: write on
-     hubra-app/hubra-plugins), so a release is listed at once instead of
-     within the hour.
-   - **Code security:** turn on secret scanning, push protection and private
-     vulnerability reporting.
+After deploying the Hubra version without the built-in books, install
+**Finances** from the catalogue (Manage › Plugins). The module is on by
+default for every club that has Finance on. Until then, Finanzen shows only
+the invoices, the fee basis and the settings, and new invoices are not
+booked.
 
-## Layout
+## What it adds
 
-```
-plugin.yaml              # id, version, Hubra range, package, modules, requires
-hubra_example/
-  __init__.py            # module = Module(...): blueprint, nav entry, setting, tables
-  models.py              # SQLAlchemy models (one copy per club schema)
-  routes.py              # the API, with permission_required(...)
-migrations/              # Alembic revisions of this plugin only
-frontend/src/
-  index.tsx              # registerPlugin({...}): routes, icons, translations
-  NotesScreen.tsx        # the screen
-  api.ts                 # calls to the plugin's API
-  translations.json      # en-GB and de-CH
-tests/test_example.py    # runs with Hubra's pytest fixtures
-CHANGELOG.md             # "## <version>" sections, shown before updating
-.releaseignore           # kept out of the release zip
-.github/workflows/release.yml
-.github/rulesets/        # importable rulesets for main and v* tags
-```
-
-What a plugin can do (settings, event hooks, Celery tasks, tabs on built-in
-screens, slots, connected apps) is in
-[plugins/README.md](https://github.com/hubra-app/hubra/blob/main/plugins/README.md)
-and [hubra/modules/README.md](https://github.com/hubra-app/hubra/blob/main/app/backend/hubra/modules/README.md).
-[hubra-plugin-keys](https://github.com/hubra-app/hubra-plugin-keys) is a
-bigger real plugin to compare with.
+| Where | What |
+| --- | --- |
+| Finanzen › Übersicht | balance, this month, the last twelve months, sums per category |
+| Finanzen › Buchungen | income and expenses, each with its own page; recurring bookings |
+| Finanzen › Jahresrechnung | the annual accounts, opening balances, closing a year |
+| Finanzen › Einstellungen | transaction categories; the monthly statement card under Abrechnung |
+| Fee basis | the sources "recurring expenses" and "last year's expenses" |
+| Search (Ctrl+K) | transactions |
+| Jobs | due recurring bookings every day; the statement on the first of the month |
 
 ## Develop
 
-Clone the repository into `plugins/<id>` of a Hubra checkout:
-
-```
-cd hubra/app/backend
-pytest ../../plugins/<id>                       # tests, with Hubra's fixtures
-flask plugins revision <id> -m "..." --autogenerate   # with HUBRA_PLUGINS_AUTOINSTALL=<id>
-cd ../frontend
-npm run typecheck:plugins
-npm run build:plugin -- ../../plugins/<id>      # --watch while you work
-```
-
-With `HUBRA_PLUGINS_AUTOINSTALL=<id>` a local Hubra loads the plugin from the
-checkout without installing it.
+Clone it into `plugins/finances` of a Hubra checkout, then from
+`app/backend` run `pytest ../../plugins/finances`, and from `app/frontend`
+`npm run typecheck:plugins` and `npm run build:plugin -- ../../plugins/finances`.
+The browser specs in `e2e/` run from Hubra's `app/frontend/e2e`.
 
 ## Release
 
-Bump `version` in `plugin.yaml`, add a `## <version>` section to
-`CHANGELOG.md` and merge. Then tag the merged commit on main and push the tag:
+Push a tag that matches `plugin.yaml` (`git tag v1.0.0 && git push origin v1.0.0`).
+The workflow tests, signs (environment `plugin-signing`) and publishes the
+release with `finances-<version>.zip`. See `.github/workflows/release.yml`.
 
-```sh
-git switch main && git pull
-git tag v<version> && git push origin v<version>
-```
-
-The workflow tests the plugin and builds its frontend, the `plugin-signing`
-job signs it after your approval, and only then is the GitHub release
-`v<version>` published, with `<id>-<version>.zip` and its `.sha256` attached. Files
-listed in `.releaseignore` stay out of the zip. Releases are immutable, so a
-published version never changes: fix a bad one with a new version. The template itself is never signed.
-
-Migrations must keep the previous version working (add columns and tables,
-drop them a release later): a rollback in the plugin catalogue does not undo
-them.
+License: AGPL-3.0-or-later.
