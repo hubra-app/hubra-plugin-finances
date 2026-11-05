@@ -1,14 +1,14 @@
-id: example
-name: Example
-version: "0.1.0"
+id: finances
+name: Finances
+version: "1.0.0"
 hubra: ">=0.2,<1"
-description: "A starting point for a Hubra plugin: one table, an API, a screen and a test."
+description: "The club's books: transactions, categories, the overview, recurring bookings, the monthly statement and the annual accounts. Invoices stay in Hubra."
 author: Hubra
-homepage: https://github.com/hubra-app/hubra-plugins-template
+homepage: https://github.com/hubra-app/hubra-plugin-finances
 license: AGPL-3.0-or-later
-tags: [example]
-package: hubra_example
-modules: [example]
-requires: [members]
-migrations: migrations
+tags: [finance]
+package: hubra_finances
+modules: [finance.books]
+requires: [finance]
+uses: [routes, events, jobs, frontend]
 frontend: frontend/dist/plugin.js
