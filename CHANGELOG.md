@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+- Release on a pushed v* tag (works with immutable releases) (#1)
+- Finances 1.0.0: the books, moved out of Hubra's Finance module (#2)
+- Release: check out Hubra main again (#3)
+
 ## 1.0.0
 
 The books move out of Hubra's Finance module into this plugin: transactions,
