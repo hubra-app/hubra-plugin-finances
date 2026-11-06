@@ -2,23 +2,45 @@
 recurring expenses marked as counting for fees, times their payments per
 year) and ``last_year`` (the confirmed expenses of the last full billing
 year). Hubra keeps the fee basis itself (Finanzen › Beitragsgrundlage) and
-falls back to the typed-in figure without this plugin."""
+falls back to the typed-in figure without this plugin.
+
+Both are query contracts (``finance.books.fee_basis.<source>``) that Hubra
+asks; the billing year comes from Hubra's ``finance.billing_period``. No
+Hubra internals are imported (docs/contracts.md in hubra)."""
 
 from __future__ import annotations
 
 from datetime import date, timedelta
 from decimal import Decimal
 
+from pydantic import BaseModel
 from sqlalchemy import func, select
 
+from hubra.core.contracts import SYSTEM, query
 from hubra.core.extensions import db
 from hubra.core.models.finance import RecurringTransaction, Transaction, TransactionCategory
 
 
-def _fb():
-    from hubra.api.finance import fee_basis
+class SourceIn(BaseModel):
+    on: date
 
-    return fee_basis
+
+class Line(BaseModel):
+    category_id: int | None = None
+    name: str | None = None
+    color: str | None = None
+    amount: float
+    items: list[dict] = []
+
+
+class SourceOut(BaseModel):
+    lines: list[Line]
+    period: dict | None = None
+
+
+def _billing_year(on: date) -> tuple[date, date]:
+    period = query("finance.billing_period", on=on, actor=SYSTEM)
+    return date.fromisoformat(period["start"]), date.fromisoformat(period["end"])
 
 
 def _lines_by_category(rows) -> list[dict]:
@@ -72,9 +94,8 @@ def recurring_lines() -> list[dict]:
 
 
 def last_year_lines(today: date) -> tuple[list[dict], date, date]:
-    fb = _fb()
-    this_start, _ = fb._billing_year(today)
-    start, end = fb._billing_year(this_start - timedelta(days=1))
+    this_start, _ = _billing_year(today)
+    start, end = _billing_year(this_start - timedelta(days=1))
     rows = db.session.execute(
         select(Transaction.category_id, func.sum(Transaction.amount))
         .where(Transaction.status == "Completed")
@@ -91,16 +112,10 @@ def last_year_lines(today: date) -> tuple[list[dict], date, date]:
     return lines, start, end
 
 
-def _recurring_source(today: date):
-    return recurring_lines(), None
+def recurring_source(ctx, data: SourceIn) -> SourceOut:
+    return SourceOut(lines=recurring_lines(), period=None)
 
 
-def _last_year_source(today: date):
-    lines, start, end = last_year_lines(today)
-    return lines, {"from": start.isoformat(), "to": end.isoformat()}
-
-
-def register() -> None:
-    fb = _fb()
-    fb.register_basis_source("recurring", "finance.books", _recurring_source)
-    fb.register_basis_source("last_year", "finance.books", _last_year_source)
+def last_year_source(ctx, data: SourceIn) -> SourceOut:
+    lines, start, end = last_year_lines(data.on)
+    return SourceOut(lines=lines, period={"from": start.isoformat(), "to": end.isoformat()})
