@@ -1,5 +1,5 @@
 """Bookkeeping services: transaction categories, transactions, the overview
-and the summary by category. Moved out of Hubra's hubra.api.finance.services;
+and the summary by category. Moved out of Hubra's Finance module;
 invoices stay in Hubra."""
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from math import ceil
 from sqlalchemy import case, func, select
 from sqlalchemy.orm import selectinload
 
-from hubra.api.finance.services import InvoiceService
+from hubra.core.contracts import SYSTEM, call
 from hubra.core.errors import raise_error
 from hubra.core.extensions import db
 from hubra.core.models.finance import Invoice, Transaction, TransactionCategory
@@ -200,11 +200,21 @@ class TransactionService:
             invoice = db.session.scalar(
                 select(Invoice).where(Invoice.transaction_id == transaction.id)
             )
+            # As SYSTEM: the right to book the income is enough here.
+            status = None
             if invoice is not None:
                 if transaction.status == "Completed" and invoice.status != "Paid":
-                    InvoiceService.update(invoice, {"status": "Paid"}, actor_id)
+                    status = "Paid"
                 elif transaction.status == "Pending" and invoice.status == "Paid":
-                    InvoiceService.update(invoice, {"status": "Open"}, actor_id)
+                    status = "Open"
+            if status is not None:
+                call(
+                    "finance.invoice.set_status",
+                    invoice_id=invoice.id,
+                    status=status,
+                    actor_id=actor_id,
+                    actor=SYSTEM,
+                )
 
         log_audit(
             actor_id=actor_id,

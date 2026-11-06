@@ -18,11 +18,11 @@ from hubra.core.schemas.finance import (
     TransactionCategorySchema,
     TransactionCreateSchema,
     TransactionSchema,
-    TransactionUpdateSchema,
 )
 from hubra.core.utils import log_audit
 from hubra_finances import annual  # its import guards closed fiscal years
 from hubra_finances.recurring import RecurringTransactionService, recurring_to_dict
+from hubra_finances.schemas import TransactionUpdateSchema
 from hubra_finances.services import (
     FinanceOverviewService,
     FinanceSummaryService,

@@ -10,5 +10,5 @@ tags: [finance]
 package: hubra_finances
 modules: [finance.books]
 requires: [finance]
-uses: [routes, events, jobs, frontend]
+uses: [routes, events, jobs, contracts, frontend]
 frontend: frontend/dist/plugin.js
