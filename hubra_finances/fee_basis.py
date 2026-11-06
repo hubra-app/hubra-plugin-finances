@@ -21,6 +21,27 @@ def _fb():
     return fee_basis
 
 
+def _lines_by_category(rows) -> list[dict]:
+    """(category, item, amount) rows as one line per category, largest first."""
+    lines: dict[int | None, dict] = {}
+    for category, item, amount in rows:
+        key = category.id if category is not None else None
+        line = lines.setdefault(
+            key,
+            {
+                "category_id": key,
+                "name": category.name if category is not None else None,
+                "color": category.color if category is not None else None,
+                "amount": Decimal(0),
+                "items": [],
+            },
+        )
+        line["amount"] += amount
+        if item is not None:
+            line["items"].append(item)
+    return sorted(lines.values(), key=lambda line: -line["amount"])
+
+
 def recurring_lines() -> list[dict]:
     from hubra_finances.recurring import yearly_amount
 
@@ -47,7 +68,7 @@ def recurring_lines() -> list[dict]:
                 amount,
             )
         )
-    return _fb()._lines_by_category(rows)
+    return _lines_by_category(rows)
 
 
 def last_year_lines(today: date) -> tuple[list[dict], date, date]:
@@ -63,7 +84,7 @@ def last_year_lines(today: date) -> tuple[list[dict], date, date]:
         .group_by(Transaction.category_id)
     ).all()
     categories = {c.id: c for c in db.session.scalars(select(TransactionCategory)).all()}
-    lines = fb._lines_by_category(
+    lines = _lines_by_category(
         (categories.get(category_id), None, abs(Decimal(str(total))))
         for category_id, total in rows
     )
