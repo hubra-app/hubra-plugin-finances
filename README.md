@@ -9,7 +9,7 @@ Invoices, reminders, the Swiss QR-bill, membership fees, the fee basis and
 external parties stay in Hubra's Finance module. With this plugin on, every
 invoice books its income here, and paying the invoice completes the booking.
 
-**Plugin id** `finances` · **Package** `hubra_finances` · **Module** `finance.books` (needs `finance`) · **Works with** Hubra `>=0.2,<1`
+**Plugin id** `finances` · **Package** `hubra_finances` · **Modules** `finance.books`, `finance.budgets` (need `finance`) · **Works with** Hubra `>=0.2,<1`
 
 ## Coming from Hubra's built-in books
 
@@ -25,15 +25,25 @@ default for every club that has Finance on. Until then, Finanzen shows only
 the invoices, the fee basis and the settings, and new invoices are not
 booked.
 
+## Coming from the Budgets plugin
+
+Budgets (a yearly plan per category, compared with the bookings) was a
+plugin of its own up to 1.3. Finances 1.1 took it over: installing or
+updating Finances removes the Budgets plugin from the platform and keeps
+everything it had, the `budgets` and `budget_lines` tables, each club's
+Budgets switch, the `budgets.*` permission keys and the API paths. Budgets
+stays its own module, so a club that doesn't plan keeps it off.
+
 ## What it adds
 
 | Where | What |
 | --- | --- |
 | Finanzen › Übersicht | balance, this month, the last twelve months, sums per category |
 | Finanzen › Buchungen | income and expenses, each with its own page; recurring bookings |
+| Finanzen › Budget | a budget per year and category, planned against booked; approve, lock, copy to next year (module `finance.budgets`) |
 | Finanzen › Jahresrechnung | the annual accounts, opening balances, closing a year |
 | Finanzen › Einstellungen | transaction categories; the monthly statement card under Abrechnung |
-| Fee basis | the sources "recurring expenses" and "last year's expenses" |
+| Fee basis | the sources "recurring expenses", "last year's expenses" and "budget" |
 | Search (Ctrl+K) | transactions |
 | Jobs | due recurring bookings every day; the statement on the first of the month |
 

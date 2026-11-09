@@ -1,6 +1,7 @@
 import { categoryColors, colorText, registerPlugin } from '@hubra/plugin-sdk'
 import { listTransactions } from './api'
 import { AnnualAccountsTab } from './AnnualAccountsTab'
+import { BudgetsTab } from './BudgetsTab'
 import { FinanceOverviewTab } from './FinanceOverviewTab'
 import { RecurringTab } from './RecurringTab'
 import { StatementCard } from './StatementCard'
@@ -20,6 +21,9 @@ registerPlugin({
     { screen: 'finance', group: 'bookings', id: 'transactions', label: 'shell.nav.incomeExpenses', module: MODULE, perm: 'finance.transactions.read', order: 10, component: TransactionsTab },
     { screen: 'finance', group: 'bookings', id: 'recurring', label: 'shell.nav.recurring', module: MODULE, perm: 'finance.transactions.read', order: 20, component: RecurringTab },
     { screen: 'finance', group: 'annual', id: 'annual', label: 'shell.nav.annualAccounts', module: MODULE, perm: 'finance.accounts.read', order: 10, component: AnnualAccountsTab },
+    // Budgets: its own module (finance.budgets), switched on per club. Same
+    // tab id and permission as when it was the Budgets plugin.
+    { screen: 'finance', id: 'budgets', label: 'shell.nav.budgets', module: 'finance.budgets', perm: 'budgets.budgets.read', component: BudgetsTab },
     { screen: 'finance', group: 'setup', id: 'categories', label: 'shell.nav.txCategories', module: MODULE, perm: 'finance.transaction_categories.read', order: 10, component: TransactionCategoriesTab },
   ],
   routes: [
