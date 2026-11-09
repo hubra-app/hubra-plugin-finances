@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.0
+
+Budgets is part of Finances now. Installing or updating to 1.1.0 takes the
+Budgets plugin over (`replaces: [budgets]`): its budgets and lines, the
+club's module switch (Budgets stays a module of its own, `finance.budgets`,
+off by default), the permission keys (`budgets.*`), the API paths
+(`/api/v1/budgets`) and the fee-basis source stay as they were. Budgets
+disappears from the plugin catalogue. Needs the Hubra version that knows
+`replaces:` (hubra-app/hubra#272).
+
 ## 1.0.1
 
 - Release on a pushed v* tag (works with immutable releases) (#1)
