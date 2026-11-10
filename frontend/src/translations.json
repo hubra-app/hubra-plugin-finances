@@ -36,36 +36,36 @@
   },
   "de-CH": {
     "budgets": {
-      "pick": "Budget uswähle",
-      "editLines": "Poste bearbeite",
-      "unapprove": "Widr ufmache",
-      "approve": "Als gnehmigt markiere",
-      "copy": "Uf {{year}} kopiere",
-      "new": "Neus Budget",
-      "empty": "No kei Budget. Leg eis für das Jahr aa.",
-      "delete": "Budget lösche",
-      "deleteConfirm": "{{name}} {{year}} lösche?",
-      "plannedResult": "Budgetierts Ergebnis",
+      "pick": "Budget auswählen",
+      "editLines": "Posten bearbeiten",
+      "unapprove": "Wieder öffnen",
+      "approve": "Als genehmigt markieren",
+      "copy": "Auf {{year}} kopieren",
+      "new": "Neues Budget",
+      "empty": "Noch kein Budget. Lege eines für dieses Jahr an.",
+      "delete": "Budget löschen",
+      "deleteConfirm": "{{name}} {{year}} löschen?",
+      "plannedResult": "Budgetiertes Ergebnis",
       "actualResult": "Ergebnis bis jetzt",
-      "approved": "Gnehmigt",
-      "income": "Iinahme",
-      "expense": "Usgabe",
+      "approved": "Genehmigt",
+      "income": "Einnahmen",
+      "expense": "Ausgaben",
       "category": "Kategorie",
       "planned": "Budget",
       "actual": "Ist",
-      "unplanned": "nöd budgetiert",
+      "unplanned": "nicht budgetiert",
       "total": "Total",
       "defaultName": "Jahresbudget",
       "name": "Name",
       "year": "Jahr",
-      "addLine": "Poste hinzuefüege",
+      "addLine": "Posten hinzufügen",
       "owner": "Verantwortlich",
       "noOwner": "Niemand",
       "ownerHint": "Plant die Posten und Notizen dieses Budgets, auch ohne das Recht, alle Budgets zu bearbeiten."
     },
     "shell": {
       "nav": {
-        "budgets": "Budget"
+        "budgets": "Budgets"
       }
     }
   }
