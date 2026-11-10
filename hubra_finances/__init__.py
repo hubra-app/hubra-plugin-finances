@@ -18,7 +18,7 @@ permission keys and contract, so clubs keep their budgets, their module
 switch and their roles. See budgets/.
 """
 
-from hubra.core.contracts import query_contract
+from hubra.core.contracts import WidgetField, query_contract, widget_contract
 from hubra.core.modules import Blueprint, Module, Schedule
 
 DAY = 24 * 60 * 60.0
@@ -64,6 +64,16 @@ books = Module(
             output="hubra_finances.fee_basis:SourceOut",
             description="Confirmed expenses of the last full billing year",
         ),
+        # Dashboard widget (hubra_finances/widgets.py).
+        widget_contract(
+            "finance.books.cash",
+            "hubra_finances.widgets:cash",
+            label="finances.widget.cash",
+            description="finances.widget.cashHint",
+            size="s",
+            view="stat",
+            perm="finance.overview.read",
+        ),
     ),
     consumes={
         "finance.billing_period": ">=1,<2",
@@ -102,6 +112,20 @@ budgets = Module(
             input="hubra_finances.budgets.fee_basis:SourceIn",
             output="hubra_finances.budgets.fee_basis:SourceOut",
             description="The approved budget's expenses of a billing year",
+        ),
+        # Dashboard widget (hubra_finances/widgets.py), as Budgets had it.
+        widget_contract(
+            "finance.budgets.usage",
+            "hubra_finances.widgets:usage",
+            label="budgets.widget.usage",
+            description="budgets.widget.usageHint",
+            size="m",
+            view="list",
+            perm="budgets.budgets.read",
+            fields=(
+                WidgetField("income", "budgets.widget.income", "switch", False),
+                WidgetField("count", "budgets.widget.count", "number", 5),
+            ),
         ),
     ),
     consumes={"finance.billing_period": ">=1,<2"},

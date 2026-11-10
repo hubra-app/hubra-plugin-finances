@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Dashboard widget **Geld heute**: bank and cash today, from the fiscal year's opening balances and the bookings since (needs the finance overview right).
+- The dashboard widget **Budget dieses Jahr** is back. Budgets had it up to 1.3; it was lost when Finances took Budgets over. Expenses now count as positive against the plan.
 - German texts of the budgets are in Standard German now; they were still in Swiss German dialect.
 
 ## 1.2.0

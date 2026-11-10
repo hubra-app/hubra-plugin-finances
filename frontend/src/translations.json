@@ -26,11 +26,23 @@
       "addLine": "Add line",
       "owner": "Responsible",
       "noOwner": "Nobody",
-      "ownerHint": "Plans this budget's lines and notes, even without the right to edit all budgets."
+      "ownerHint": "Plans this budget's lines and notes, even without the right to edit all budgets.",
+      "widget": {
+        "usage": "Budget this year",
+        "usageHint": "Booked against planned per category, the most used first",
+        "income": "Income instead of expenses",
+        "count": "How many"
+      }
     },
     "shell": {
       "nav": {
         "budgets": "Budgets"
+      }
+    },
+    "finances": {
+      "widget": {
+        "cash": "Money today",
+        "cashHint": "Bank and cash today: the fiscal year's opening balances plus the bookings since"
       }
     }
   },
@@ -61,11 +73,23 @@
       "addLine": "Posten hinzufügen",
       "owner": "Verantwortlich",
       "noOwner": "Niemand",
-      "ownerHint": "Plant die Posten und Notizen dieses Budgets, auch ohne das Recht, alle Budgets zu bearbeiten."
+      "ownerHint": "Plant die Posten und Notizen dieses Budgets, auch ohne das Recht, alle Budgets zu bearbeiten.",
+      "widget": {
+        "usage": "Budget dieses Jahr",
+        "usageHint": "Gebuchte Beträge gegen das Budget, pro Kategorie, die am meisten ausgeschöpften zuerst",
+        "income": "Einnahmen statt Ausgaben",
+        "count": "Wie viele"
+      }
     },
     "shell": {
       "nav": {
         "budgets": "Budgets"
+      }
+    },
+    "finances": {
+      "widget": {
+        "cash": "Geld heute",
+        "cashHint": "Bank und Kasse heute: Eröffnungsbilanz des Geschäftsjahrs plus die gebuchten Zahlungen seither"
       }
     }
   }
