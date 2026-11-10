@@ -44,6 +44,7 @@ stays its own module, so a club that doesn't plan keeps it off.
 | Finanzen › Jahresrechnung | the annual accounts, opening balances, closing a year |
 | Finanzen › Einstellungen | transaction categories; the monthly statement card under Abrechnung |
 | Fee basis | the sources "recurring expenses", "last year's expenses" and "budget" |
+| Dashboards | widgets "Geld heute" (bank and cash today, needs the overview right) and "Budget dieses Jahr" (budget use per category) |
 | Search (Ctrl+K) | transactions |
 | Jobs | due recurring bookings every day; the statement on the first of the month |
 
