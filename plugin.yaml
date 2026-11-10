@@ -1,7 +1,7 @@
 id: finances
 name: Finances
-version: "1.1.0"
-hubra: ">=0.2,<1"
+version: "1.2.0"
+hubra: ">=0.2.5,<1"
 description: "The club's books: transactions, categories, the overview, recurring bookings, the monthly statement and the annual accounts. Invoices stay in Hubra."
 author: Hubra
 homepage: https://github.com/hubra-app/hubra-plugin-finances
