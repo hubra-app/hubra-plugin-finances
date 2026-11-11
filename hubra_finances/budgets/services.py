@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from decimal import Decimal, InvalidOperation
 
-from sqlalchemy import extract, func, select
+from sqlalchemy import delete, extract, func, select, update
 
 from hubra.core.utils import log_audit
 from hubra.core.errors import raise_error
@@ -315,3 +315,23 @@ class BudgetService:
             },
             actor_id,
         )
+
+
+def purge_orphans() -> dict:
+    """Clear what points at rows that are gone. Club schemas are cloned
+    without foreign keys, so ON DELETE never runs there: a member deleted on
+    request (Hubra has no member.deleted event yet) would stay a budget's
+    owner, and a deleted category's lines would stay in their budget."""
+    owners = db.session.execute(
+        update(Budget)
+        .where(Budget.owner_id.isnot(None))
+        .where(Budget.owner_id.not_in(select(Member.id)))
+        .values(owner_id=None)
+        .execution_options(synchronize_session=False)
+    ).rowcount
+    lines = db.session.execute(
+        delete(BudgetLine)
+        .where(BudgetLine.category_id.not_in(select(TransactionCategory.id)))
+        .execution_options(synchronize_session=False)
+    ).rowcount
+    return {"owners": owners or 0, "lines": lines or 0}

@@ -8,7 +8,7 @@ from datetime import date
 from decimal import Decimal
 from math import ceil
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, delete, func, select
 from sqlalchemy.orm import selectinload
 
 from hubra.core.contracts import SYSTEM, call
@@ -106,6 +106,11 @@ class TransactionCategoryService:
             raise_error(
                 409, "CONFLICT", "Category is planned in an approved budget"
             )
+        # Club schemas are cloned without foreign keys, so the cascade may not
+        # run there: the open budgets' lines of this category go explicitly.
+        db.session.execute(
+            delete(BudgetLine).where(BudgetLine.category_id == category.id)
+        )
 
         db.session.delete(category)
 

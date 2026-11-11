@@ -7,6 +7,7 @@
 - The dashboard widget **Budget dieses Jahr** is back. Budgets had it up to 1.3; it was lost when Finances took Budgets over. Expenses now count as positive against the plan.
 - German texts of the budgets are in Standard German now; they were still in Swiss German dialect.
 - Security review: creating, renaming and deleting categories, renaming an account and moving a category to another account now go into the audit log. A category planned in an approved budget can't be deleted (its budget line went with it). Amounts of 10 billion or more, payee names over 255 characters, budget texts that are too long or not text, `approved` that is not true or false, and category ids that are not whole numbers are refused with a 400 instead of a server error. A statement month outside 1900 to 2999 is a 400.
+- Club databases have no foreign keys, so nothing cascaded there: deleting a category now removes its lines from open budgets itself, and a daily job clears the owner of budgets whose member was deleted (on request, for example) and lines whose category is gone.
 
 ## 1.2.0
 

@@ -112,3 +112,49 @@ def test_category_of_an_approved_budget_stays(client, auth_headers, db, category
     assert resp.status_code == 409
     lines = client.get(f"/api/v1/budgets/{bid}").get_json()["lines"]
     assert len(lines) == 1
+
+
+def test_open_budget_lines_go_with_their_category(client, auth_headers, db, category):
+    bid = client.post(
+        "/api/v1/budgets/",
+        json={
+            "name": "Open",
+            "year": 2026,
+            "lines": [{"category_id": category.id, "kind": "expense", "planned": 5}],
+        },
+    ).get_json()["id"]
+    assert client.delete(f"{URL}/transaction-categories/{category.id}").status_code == 204
+    assert client.get(f"/api/v1/budgets/{bid}").get_json()["lines"] == []
+
+
+def test_purge_clears_gone_owners_and_lines(app, db, seeded_db, category):
+    """Club schemas have no foreign keys: what a deleted member or category
+    left behind is cleared by the daily job."""
+    from sqlalchemy import text
+
+    from hubra_finances.budgets.models import Budget, BudgetLine
+    from hubra_finances.tasks import purge_orphans
+
+    budget = Budget(year=2026, name="B", owner_id=None)
+    db.session.add(budget)
+    db.session.flush()
+    db.session.add(
+        BudgetLine(budget_id=budget.id, category_id=category.id, kind="expense", planned=1)
+    )
+    db.session.commit()
+    if db.engine.dialect.name == "postgresql":
+        db.session.execute(text("SET session_replication_role = replica"))
+    db.session.execute(
+        text("UPDATE budgets SET owner_id = 999999 WHERE id = :id"), {"id": budget.id}
+    )
+    db.session.execute(
+        text("DELETE FROM transaction_categories WHERE id = :id"), {"id": category.id}
+    )
+    if db.engine.dialect.name == "postgresql":
+        db.session.execute(text("SET session_replication_role = DEFAULT"))
+    db.session.commit()
+
+    assert purge_orphans.run() == {"owners": 1, "lines": 1}
+    db.session.expire_all()
+    assert db.session.get(Budget, budget.id).owner_id is None
+    assert db.session.get(Budget, budget.id).lines == []

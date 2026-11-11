@@ -45,3 +45,21 @@ def send_statements(today: date | None = None) -> dict:
     send_statement(last_month, settings["email"])
     db.session.commit()
     return {"sent": 1}
+
+
+@celery_app.task(name="hubra_finances.tasks.purge_orphans")
+@per_tenant_job(MODULE)
+def purge_orphans() -> dict:
+    """Clear budget owners who were deleted and lines of deleted categories
+    (see budgets.services.purge_orphans)."""
+    from hubra_finances.budgets.services import purge_orphans as purge
+
+    result = purge()
+    db.session.commit()
+    if result["owners"] or result["lines"]:
+        logger.info(
+            "finances_orphans_purged owners=%s lines=%s",
+            result["owners"],
+            result["lines"],
+        )
+    return result
