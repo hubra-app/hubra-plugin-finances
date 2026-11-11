@@ -19,10 +19,12 @@ import {
 import { IconDownload, IconLock, IconLockOpen, IconPlus } from '@tabler/icons-react'
 import { useT, getCurrentLanguage } from '@hubra/plugin-sdk'
 import { useAuth, useToast } from '@hubra/plugin-sdk'
-import { ConfirmModal, Modal, useSubmitOnce } from '@hubra/plugin-sdk'
+import { ActionButtons, ConfirmModal, Modal, useSubmitOnce } from '@hubra/plugin-sdk'
 import {
   closeFiscalYear,
   createAccount,
+  deleteAccount,
+  renameAccount,
   downloadAnnualAccounts,
   getAnnualReport,
   getChart,
@@ -447,6 +449,9 @@ function ChartView() {
   const [number, setNumber] = useState('')
   const [name, setName] = useState('')
   const [kind, setKind] = useState<AccountKind>('expense')
+  const [renaming, setRenaming] = useState<{ id: number; label: string } | null>(null)
+  const [newName, setNewName] = useState('')
+  const [deleting, setDeleting] = useState<{ id: number; label: string } | null>(null)
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: QK.chart })
@@ -460,6 +465,17 @@ function ChartView() {
       await createAccount({ number: number.trim(), name: name.trim(), kind })
       setNumber('')
       setName('')
+      refresh()
+    } catch (err) {
+      fail(err)
+    }
+  })
+
+  const [rename, savingName] = useSubmitOnce(async () => {
+    if (!renaming || !newName.trim()) return
+    try {
+      await renameAccount(renaming.id, newName.trim())
+      setRenaming(null)
       refresh()
     } catch (err) {
       fail(err)
@@ -541,6 +557,18 @@ function ChartView() {
                     {kindLabel[a.kind]}
                   </Text>
                 </Table.Td>
+                {canEdit && (
+                  <Table.Td style={{ width: 72 }}>
+                    <ActionButtons
+                      editTitle={t('finance.annual.renameAccount', 'Umbenennen')}
+                      onEdit={() => {
+                        setRenaming({ id: a.id, label: `${a.number} ${a.name}` })
+                        setNewName(a.name)
+                      }}
+                      onDelete={() => setDeleting({ id: a.id, label: `${a.number} ${a.name}` })}
+                    />
+                  </Table.Td>
+                )}
               </Table.Tr>
             ))}
           </Table.Tbody>
@@ -581,6 +609,51 @@ function ChartView() {
           </Group>
         )}
       </Paper>
+      <Modal
+        open={renaming !== null}
+        onClose={() => setRenaming(null)}
+        title={t('finance.annual.renameAccount', 'Umbenennen')}
+        subtitle={renaming?.label}
+        onSubmit={(e) => {
+          e?.preventDefault()
+          rename()
+        }}
+        footer={
+          <>
+            <Button variant="default" onClick={() => setRenaming(null)}>
+              {t('common.cancel', 'Abbrechen')}
+            </Button>
+            <Button type="submit" loading={savingName} disabled={!newName.trim()}>
+              {t('common.save', 'Speichern')}
+            </Button>
+          </>
+        }
+      >
+        <TextInput
+          label={t('finance.annual.accountName', 'Konto')}
+          value={newName}
+          onChange={(e) => setNewName(e.currentTarget.value)}
+          data-autofocus
+        />
+      </Modal>
+      <ConfirmModal
+        open={deleting !== null}
+        onClose={() => setDeleting(null)}
+        title={t('finance.annual.deleteAccountTitle', '«{{name}}» löschen?', { name: deleting?.label ?? '' })}
+        body={t(
+          'finance.annual.deleteAccountBody',
+          'Ein Konto, auf das noch Kategorien oder Abschlüsse zählen, bleibt.',
+        )}
+        onConfirm={async () => {
+          if (!deleting) return
+          try {
+            await deleteAccount(deleting.id)
+            refresh()
+          } catch (err) {
+            fail(err)
+          }
+        }}
+      />
     </div>
   )
 }
