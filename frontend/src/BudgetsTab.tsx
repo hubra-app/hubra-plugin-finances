@@ -350,16 +350,16 @@ function CreateModal({
       open
       onClose={onClose}
       title={t('budgets.new', 'New budget')}
+      onSubmit={(e) => {
+        e?.preventDefault()
+        if (name.trim()) onCreate(name.trim(), year)
+      }}
       footer={
         <>
-          <Button variant="subtle" onClick={onClose}>
+          <Button variant="default" onClick={onClose}>
             {t('common.cancel')}
           </Button>
-          <Button
-            variant="default"
-            disabled={!name.trim()}
-            onClick={() => onCreate(name.trim(), year)}
-          >
+          <Button type="submit" disabled={!name.trim()}>
             {t('common.save')}
           </Button>
         </>
@@ -439,12 +439,16 @@ function LinesModal({
       wide
       onClose={onClose}
       title={`${budget.name} ${budget.year}`}
+      onSubmit={(e) => {
+        e?.preventDefault()
+        if (!busy) void save()
+      }}
       footer={
         <>
-          <Button variant="subtle" onClick={onClose}>
+          <Button variant="default" onClick={onClose}>
             {t('common.cancel')}
           </Button>
-          <Button variant="default" onClick={save} loading={busy}>
+          <Button type="submit" loading={busy}>
             {t('common.save')}
           </Button>
         </>
@@ -460,6 +464,7 @@ function LinesModal({
               onChange={(v) => set(i, { categoryId: v })}
               placeholder={t('budgets.category', 'Category')}
               searchable
+              clearable
             />
             <Select
               style={{ flex: 1 }}
@@ -477,8 +482,9 @@ function LinesModal({
               onChange={(v) => set(i, { planned: Number(v) || 0 })}
               min={0}
               decimalScale={2}
-              thousandSeparator="'"
+              thousandSeparator="’"
               prefix="CHF "
+              hideControls
             />
             <ActionIcon
               variant="subtle"
