@@ -38,6 +38,8 @@ def month_of(value: str | None) -> date:
         return (date.today().replace(day=1) - timedelta(days=1)).replace(day=1)
     try:
         year, month = (int(part) for part in value.split("-"))
+        if not 1900 <= year <= 2999:  # the month's end must stay a date
+            raise ValueError(value)
         return date(year, month, 1)
     except (TypeError, ValueError):
         raise_error(400, "VALIDATION_ERROR", "month must be YYYY-MM")

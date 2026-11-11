@@ -107,6 +107,36 @@ def test_budget_validation(client, auth_headers, cats):
         assert resp.status_code == 400, lines
 
 
+def test_budget_texts_and_ids_are_checked(client, auth_headers, cats):
+    """Wrong types and over-long texts are a 400, never a database error."""
+    fees, _ = cats
+    for body in (
+        {"name": "a", "year": 2026, "notes": {"x": 1}},
+        {"name": "x" * 121, "year": 2026},
+        {"name": "a", "year": 2026, "notes": "n" * 10_001},
+    ):
+        assert client.post("/api/v1/budgets/", json=body).status_code == 400, body
+    bid = _create(client, cats).get_json()["id"]
+    assert client.patch(f"/api/v1/budgets/{bid}", json={"notes": ["x"]}).status_code == 400
+    assert client.patch(f"/api/v1/budgets/{bid}", json={"name": "x" * 121}).status_code == 400
+    assert client.patch(f"/api/v1/budgets/{bid}", json={"approved": 1}).status_code == 400
+    line = {"kind": "income", "planned": 1}
+    bad = [
+        [{**line, "category_id": True}],
+        [{**line, "category_id": float(fees.id)}],
+        [{**line, "category_id": fees.id, "note": {"a": 1}}],
+        [{**line, "category_id": fees.id, "note": "n" * 256}],
+        [{**line, "category_id": fees.id, "planned": True}],
+    ]
+    for lines in bad:
+        resp = client.put(f"/api/v1/budgets/{bid}/lines", json={"lines": lines})
+        assert resp.status_code == 400, lines
+    ok = client.patch(f"/api/v1/budgets/{bid}", json={"notes": "  Plan  "})
+    assert ok.get_json()["notes"] == "Plan"
+    cleared = client.patch(f"/api/v1/budgets/{bid}", json={"notes": ""})
+    assert cleared.get_json()["notes"] is None
+
+
 def test_approved_budget_is_locked_and_copy(client, auth_headers, cats):
     bid = _create(client, cats).get_json()["id"]
     assert (

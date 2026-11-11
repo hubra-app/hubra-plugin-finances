@@ -92,6 +92,21 @@ class TransactionCategoryService:
                 409, "CONFLICT", "Category is referenced by existing transactions"
             )
 
+        # Budget lines go with their category (ON DELETE CASCADE), and an
+        # approved budget must not change, so its categories stay.
+        from hubra_finances.budgets.models import Budget, BudgetLine
+
+        in_approved = db.session.scalar(
+            select(func.count(BudgetLine.id))
+            .join(Budget, BudgetLine.budget_id == Budget.id)
+            .where(BudgetLine.category_id == category.id)
+            .where(Budget.approved.is_(True))
+        )
+        if in_approved:
+            raise_error(
+                409, "CONFLICT", "Category is planned in an approved budget"
+            )
+
         db.session.delete(category)
 
 

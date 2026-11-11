@@ -16,13 +16,12 @@ from hubra.core.permissions import permission_required
 from hubra.core.schemas.finance import (
     TransactionCategoryCreateSchema,
     TransactionCategorySchema,
-    TransactionCreateSchema,
     TransactionSchema,
 )
 from hubra.core.utils import log_audit
 from hubra_finances import annual  # its import guards closed fiscal years
 from hubra_finances.recurring import RecurringTransactionService, recurring_to_dict
-from hubra_finances.schemas import TransactionUpdateSchema
+from hubra_finances.schemas import TransactionCreateSchema, TransactionUpdateSchema
 from hubra_finances.services import (
     FinanceOverviewService,
     FinanceSummaryService,
@@ -62,6 +61,13 @@ def create_transaction_category():
         return api_error("VALIDATION_ERROR", str(exc.messages), 400)
 
     category = TransactionCategoriesService.create(data)
+    log_audit(
+        get_current_member().id,
+        "create_transaction_category",
+        "TransactionCategory",
+        category.id,
+        category.name,
+    )
 
     try:
         db.session.commit()
@@ -86,6 +92,13 @@ def update_transaction_category(id: int):
         return api_error("VALIDATION_ERROR", str(exc.messages), 400)
 
     TransactionCategoryService.update(category, data)
+    log_audit(
+        get_current_member().id,
+        "update_transaction_category",
+        "TransactionCategory",
+        category.id,
+        category.name,
+    )
 
     try:
         db.session.commit()
@@ -102,7 +115,15 @@ def update_transaction_category(id: int):
     "transaction_categories", "delete", "Delete transaction categories"
 )
 def delete_transaction_category(id: int):
+    name = TransactionCategoryService.get(id).name
     TransactionCategoryService.delete(id)
+    log_audit(
+        get_current_member().id,
+        "delete_transaction_category",
+        "TransactionCategory",
+        id,
+        name,
+    )
 
     try:
         db.session.commit()
@@ -312,6 +333,13 @@ def update_account(id: int):
         404, "NOT_FOUND", "Account not found"
     )
     annual.update_account(account, request.get_json(silent=True) or {})
+    log_audit(
+        get_current_member().id,
+        "rename_account",
+        "Account",
+        account.id,
+        f"{account.number} {account.name}",
+    )
     db.session.commit()
     return jsonify(annual.account_dict(account))
 
@@ -346,6 +374,13 @@ def map_category_account(id: int):
     ):
         raise_error(400, "VALIDATION_ERROR", "accountId must be a number or null")
     annual.map_category(category, account_id)
+    log_audit(
+        get_current_member().id,
+        "map_category_account",
+        "TransactionCategory",
+        category.id,
+        f"{category.name} → {account_id or '-'}",
+    )
     db.session.commit()
     return jsonify({"id": category.id, "accountId": category.account_id})
 
