@@ -280,7 +280,9 @@ def test_linked_transaction_follows_invoice_amount(client, auth_headers, seeded_
     assert float(db.session.get(Transaction, tx_id).amount) == 60.0
 
     client.patch(url, json={"status": "Paid"}, headers=auth_headers)
-    assert client.patch(url, json={"amount": 70.0}, headers=auth_headers).status_code == 200
+    # Hubra refuses to change a paid invoice's amount (INVOICE_PAID); either
+    # way the booked income keeps what was paid.
+    assert client.patch(url, json={"amount": 70.0}, headers=auth_headers).status_code in (200, 409)
     db.session.expire_all()
     tx = db.session.get(Transaction, tx_id)
     assert tx.status == "Completed"

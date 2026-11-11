@@ -8,7 +8,7 @@ from datetime import date
 from decimal import Decimal
 from math import ceil
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, delete, func, select
 from sqlalchemy.orm import selectinload
 
 from hubra.core.contracts import SYSTEM, call
@@ -91,6 +91,26 @@ class TransactionCategoryService:
             raise_error(
                 409, "CONFLICT", "Category is referenced by existing transactions"
             )
+
+        # Budget lines go with their category (ON DELETE CASCADE), and an
+        # approved budget must not change, so its categories stay.
+        from hubra_finances.budgets.models import Budget, BudgetLine
+
+        in_approved = db.session.scalar(
+            select(func.count(BudgetLine.id))
+            .join(Budget, BudgetLine.budget_id == Budget.id)
+            .where(BudgetLine.category_id == category.id)
+            .where(Budget.approved.is_(True))
+        )
+        if in_approved:
+            raise_error(
+                409, "CONFLICT", "Category is planned in an approved budget"
+            )
+        # Club schemas are cloned without foreign keys, so the cascade may not
+        # run there: the open budgets' lines of this category go explicitly.
+        db.session.execute(
+            delete(BudgetLine).where(BudgetLine.category_id == category.id)
+        )
 
         db.session.delete(category)
 

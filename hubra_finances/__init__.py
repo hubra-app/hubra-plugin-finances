@@ -83,6 +83,7 @@ books = Module(
     schedule=(
         Schedule("finances-book-recurring", "hubra_finances.tasks.book_recurring", DAY),
         Schedule("finances-statements", "hubra_finances.tasks.send_statements", DAY),
+        Schedule("finances-purge-orphans", "hubra_finances.tasks.purge_orphans", DAY),
     ),
 )
 

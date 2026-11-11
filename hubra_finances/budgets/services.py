@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from decimal import Decimal, InvalidOperation
 
-from sqlalchemy import extract, func, select
+from sqlalchemy import delete, extract, func, select, update
 
 from hubra.core.utils import log_audit
 from hubra.core.errors import raise_error
@@ -119,10 +119,34 @@ def _owner(value) -> int | None:
 OWNER_FIELDS = frozenset({"notes"})
 
 
-def _text(value, field: str) -> str:
+# Longest texts the columns (or, for Text, a sensible page) hold; longer ones
+# are refused with 400 instead of failing in the database with a 500.
+NAME_MAX = 120
+NOTES_MAX = 10_000
+LINE_NOTE_MAX = 255
+
+
+def _text(value, field: str, limit: int | None = None) -> str:
     if value is not None and not isinstance(value, str):
         raise_error(400, "VALIDATION_ERROR", f"{field} must be text")
-    return (value or "").strip()
+    text = (value or "").strip()
+    if limit is not None and len(text) > limit:
+        raise_error(
+            400, "VALIDATION_ERROR", f"{field} is longer than {limit} characters"
+        )
+    return text
+
+
+def _optional_text(value, field: str, limit: int) -> str | None:
+    """Text for a nullable column: None (or empty) clears it."""
+    return _text(value, field, limit) or None
+
+
+def _category(value) -> int:
+    # True == 1 and 1.0 == 1 would pass a lookup by id; only whole numbers.
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise_error(400, "VALIDATION_ERROR", "category_id must be a category id")
+    return value
 
 
 def _year(value) -> int:
@@ -173,7 +197,7 @@ class BudgetService:
 
     @staticmethod
     def create(data: dict, actor_id: int | None) -> Budget:
-        name = _text(data.get("name"), "name")
+        name = _text(data.get("name"), "name", NAME_MAX)
         if not name:
             raise_error(400, "VALIDATION_ERROR", "name is required")
         year = _year(data.get("year"))
@@ -181,7 +205,7 @@ class BudgetService:
         budget = Budget(
             year=year,
             name=name,
-            notes=data.get("notes"),
+            notes=_optional_text(data.get("notes"), "notes", NOTES_MAX),
             owner_id=_owner(data.get("owner_id")),
         )
         db.session.add(budget)
@@ -197,16 +221,19 @@ class BudgetService:
         if budget.approved and data.get("approved") is not False:
             raise_error(409, "BUDGET_APPROVED", "Approved budgets cannot be changed")
         if "name" in data or "year" in data:
-            name = _text(data.get("name", budget.name), "name")
+            name = _text(data.get("name", budget.name), "name", NAME_MAX)
             if not name:
                 raise_error(400, "VALIDATION_ERROR", "name cannot be empty")
             year = _year(data.get("year", budget.year))
             BudgetService._check_unique(year, name, exclude=budget.id)
             budget.name, budget.year = name, year
         if "notes" in data:
-            budget.notes = data["notes"]
+            budget.notes = _optional_text(data["notes"], "notes", NOTES_MAX)
         if "approved" in data:
-            budget.approved = bool(data["approved"])
+            # bool("false") is True: only a real true or false approves.
+            if not isinstance(data["approved"], bool):
+                raise_error(400, "VALIDATION_ERROR", "approved must be true or false")
+            budget.approved = data["approved"]
         if "owner_id" in data:
             budget.owner_id = _owner(data["owner_id"])
         log_audit(actor_id, "update_budget", "Budget", budget.id, budget.name)
@@ -243,7 +270,7 @@ class BudgetService:
                 raise_error(
                     400, "VALIDATION_ERROR", f"kind must be one of {LINE_KINDS}"
                 )
-            cat = raw.get("category_id")
+            cat = _category(raw.get("category_id"))
             if cat not in categories:
                 raise_error(400, "VALIDATION_ERROR", f"unknown category {cat}")
             if (cat, kind) in seen:
@@ -254,7 +281,7 @@ class BudgetService:
                     category_id=cat,
                     kind=kind,
                     planned=_amount(raw.get("planned")),
-                    note=(raw.get("note") or None),
+                    note=_optional_text(raw.get("note"), "note", LINE_NOTE_MAX),
                 )
             )
         budget.lines.clear()
@@ -288,3 +315,23 @@ class BudgetService:
             },
             actor_id,
         )
+
+
+def purge_orphans() -> dict:
+    """Clear what points at rows that are gone. Club schemas are cloned
+    without foreign keys, so ON DELETE never runs there: a member deleted on
+    request (Hubra has no member.deleted event yet) would stay a budget's
+    owner, and a deleted category's lines would stay in their budget."""
+    owners = db.session.execute(
+        update(Budget)
+        .where(Budget.owner_id.isnot(None))
+        .where(Budget.owner_id.not_in(select(Member.id)))
+        .values(owner_id=None)
+        .execution_options(synchronize_session=False)
+    ).rowcount
+    lines = db.session.execute(
+        delete(BudgetLine)
+        .where(BudgetLine.category_id.not_in(select(TransactionCategory.id)))
+        .execution_options(synchronize_session=False)
+    ).rowcount
+    return {"owners": owners or 0, "lines": lines or 0}
