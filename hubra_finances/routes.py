@@ -271,7 +271,9 @@ def download_statement():
 
 
 @books_bp.post("/statement/send")
-@permission_required("overview", "read", "View finance overview")
+# Mailing is more than reading: the right to book (treasurer), not just to
+# see the overview (the board's "view").
+@permission_required("transactions", "create", "Create transactions")
 def send_statement_now():
     """Mail a month's statement to the club's statement address now."""
     from hubra_finances.statement import month_of, send_statement, statement_settings

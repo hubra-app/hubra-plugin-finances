@@ -417,14 +417,24 @@ def _report(year: int) -> dict:
 
 
 def _lines(
-    values: dict[str, Decimal], previous: dict[str, Decimal] | None
+    values: dict[str, Decimal],
+    previous: dict[str, Decimal] | None,
+    names: dict[str, str] | None = None,
 ) -> list[dict]:
+    """Report lines; *names* are account names of a closed year's report for
+    accounts renamed or deleted since."""
     accounts = accounts_by_number()
     numbers = sorted(set(values) | set(previous or {}))
+
+    def name(n: str) -> str:
+        if n in accounts:
+            return accounts[n].name
+        return (names or {}).get(n, n)
+
     return [
         {
             "number": n,
-            "name": accounts[n].name,
+            "name": name(n),
             "amount": float(values.get(n, 0)),
             "previous": float((previous or {}).get(n, 0))
             if previous is not None
@@ -445,15 +455,71 @@ def _has_bookings(start: date, end: date) -> bool:
     )
 
 
+def _stored(start: date):
+    from hubra_finances.models import YearReport
+
+    return db.session.scalar(select(YearReport).where(YearReport.start == start))
+
+
+def _from_stored(report: dict) -> dict:
+    """The figures of a stored report, as _report gives them, for comparing
+    the next year with it."""
+
+    def amounts(lines: list[dict]) -> dict[str, Decimal]:
+        return {line["number"]: _dec(line["amount"]) for line in lines}
+
+    return {
+        "income": amounts(report["income"]),
+        "expense": amounts(report["expense"]),
+        "assets": amounts(report["assets"]),
+        "liabilities": amounts(report["liabilities"]),
+        "result": _dec(report["result"]),
+        "capitalClose": _dec(report["capital"]["closing"]),
+    }
+
+
+def _stored_names(report: dict) -> dict[str, str]:
+    return {
+        line["number"]: line["name"]
+        for part in ("income", "expense", "assets", "liabilities")
+        for line in report[part]
+    }
+
+
 def annual_report(year: int) -> dict:
     """The annual accounts of fiscal year *year*, with the year before for
-    comparison when it has bookings or is closed."""
+    comparison when it has bookings or is closed. A closed year shows what
+    was stored when it was closed; a year closed before reports were stored
+    gets its report on first read."""
+    from hubra_finances.models import YearReport
+
+    start, _end = year_bounds(year)
+    row = _year_row(start)
+    if row is not None and row.closed_at is not None:
+        stored = _stored(start)
+        if stored is not None:
+            return stored.report
+        report = _live_report(year)
+        db.session.add(YearReport(start=start, report=report))
+        db.session.flush()
+        return report
+    return _live_report(year)
+
+
+def _live_report(year: int) -> dict:
     now = _report(year)
     start, end = now["start"], now["end"]
     prev_start, prev_end = year_bounds(year - 1)
     prev = None
+    names: dict[str, str] = {}
     prev_row = _year_row(prev_start)
-    if _has_bookings(prev_start, prev_end) or (prev_row and prev_row.closed_at):
+    prev_stored = (
+        _stored(prev_start) if prev_row is not None and prev_row.closed_at else None
+    )
+    if prev_stored is not None:
+        prev = _from_stored(prev_stored.report)
+        names = _stored_names(prev_stored.report)
+    elif _has_bookings(prev_start, prev_end) or (prev_row and prev_row.closed_at):
         prev = _report(year - 1)
     row = _year_row(start)
     open_invoices = db.session.execute(
@@ -499,14 +565,14 @@ def annual_report(year: int) -> dict:
             for n, v in sorted(now["opening"].items())
         ],
         "hasPrevious": prev is not None,
-        "income": _lines(now["income"], prev and prev["income"]),
-        "expense": _lines(now["expense"], prev and prev["expense"]),
+        "income": _lines(now["income"], prev and prev["income"], names),
+        "expense": _lines(now["expense"], prev and prev["expense"], names),
         "totalIncome": float(sum(now["income"].values(), Decimal(0))),
         "totalExpense": float(sum(now["expense"].values(), Decimal(0))),
         "result": float(now["result"]),
         "previousResult": float(prev["result"]) if prev else None,
-        "assets": _lines(now["assets"], prev and prev["assets"]),
-        "liabilities": _lines(now["liabilities"], prev and prev["liabilities"]),
+        "assets": _lines(now["assets"], prev and prev["assets"], names),
+        "liabilities": _lines(now["liabilities"], prev and prev["liabilities"], names),
         "capital": {
             "number": CAPITAL,
             "name": capital,
@@ -580,6 +646,12 @@ def close_year(year: int, member_id: int | None) -> FiscalYear:
     row.closed_at = datetime.now(timezone.utc)
     row.closed_by = member_id
     db.session.flush()
+    # Freeze the annual accounts as they are now (annual_report stores them).
+    stale = _stored(start)
+    if stale is not None:
+        db.session.delete(stale)
+        db.session.flush()
+    annual_report(year)
     return row
 
 
@@ -595,6 +667,9 @@ def reopen_year(year: int) -> FiscalYear:
     row.closing = None
     row.closed_at = None
     row.closed_by = None
+    stored = _stored(start)
+    if stored is not None:
+        db.session.delete(stored)
     db.session.flush()
     return row
 
