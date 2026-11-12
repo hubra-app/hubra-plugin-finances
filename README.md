@@ -1,5 +1,7 @@
 # Finances
 
+[![Test and release](https://github.com/hubra-app/hubra-plugin-finances/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/hubra-app/hubra-plugin-finances/actions/workflows/release.yml?query=branch%3Amain) [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-bitsandbricks-ffdd00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/bitsandbricks)
+
 The club's books for [Hubra](https://hubra.club): transactions and their
 categories, the overview with this month's figures and the last twelve
 months, recurring bookings, the monthly account statement and the annual
