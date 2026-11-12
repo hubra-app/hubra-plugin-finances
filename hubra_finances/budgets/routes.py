@@ -46,7 +46,12 @@ def list_budgets():
 @budgets_bp.get("/<int:budget_id>")
 @permission_required("budgets", "read", "View budgets", allow=_own_budget)
 def get_budget(budget_id: int):
-    return jsonify(budget_to_dict(BudgetService.get(budget_id), with_lines=True)), 200
+    data = budget_to_dict(BudgetService.get(budget_id), with_lines=True)
+    if _owner_only():
+        # The owner plans their budget's lines; the club's bookings in other
+        # categories are for those who may read every budget.
+        data.pop("unplanned", None)
+    return jsonify(data), 200
 
 
 @budgets_bp.post("/")

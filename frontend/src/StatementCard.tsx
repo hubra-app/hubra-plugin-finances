@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button, Group, Paper, Select, Stack, Switch, Text, TextInput, Title } from '@mantine/core'
-import { useT, useToast } from '@hubra/plugin-sdk'
+import { useAuth, useT, useToast } from '@hubra/plugin-sdk'
 import { downloadStatement, sendStatement } from './api'
 
 type FormValue = string | number | boolean | null
@@ -16,6 +16,8 @@ interface Props {
 export function StatementCard({ config, save, busy }: Props) {
   const { t, i18n } = useT()
   const { notify } = useToast()
+  // Mailing it takes the right to book, not only to see the overview.
+  const canSend = useAuth().hasPermission('finance.transactions.create')
   const [enabled, setEnabled] = useState(config.statement_enabled === true)
   const [email, setEmail] = useState(String(config.statement_email ?? ''))
   const [sending, setSending] = useState(false)
@@ -99,14 +101,16 @@ export function StatementCard({ config, save, busy }: Props) {
         <Button variant="default" onClick={() => void downloadStatement(month)}>
           {t('finance.statement.download', 'PDF herunterladen')}
         </Button>
-        <Button
-          variant="default"
-          loading={sending}
-          disabled={!saved.includes('@')}
-          onClick={() => void sendNow()}
-        >
-          {t('finance.statement.sendNow', 'Jetzt senden')}
-        </Button>
+        {canSend && (
+          <Button
+            variant="default"
+            loading={sending}
+            disabled={!saved.includes('@')}
+            onClick={() => void sendNow()}
+          >
+            {t('finance.statement.sendNow', 'Jetzt senden')}
+          </Button>
+        )}
       </Group>
     </Paper>
   )

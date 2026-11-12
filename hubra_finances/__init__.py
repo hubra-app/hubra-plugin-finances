@@ -32,6 +32,8 @@ books = Module(
     description="Transactions, categories, overview, recurring bookings, statements and annual accounts",
     default_enabled=True,
     depends_on=("finance",),
+    # The frozen annual accounts of closed years (hubra_finances/models.py).
+    tables=("finance_year_reports",),
     blueprints=(
         Blueprint(
             "hubra_finances.routes",
