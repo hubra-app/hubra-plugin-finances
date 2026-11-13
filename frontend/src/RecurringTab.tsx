@@ -15,7 +15,7 @@ import {
   TextInput,
 } from '@mantine/core'
 import { IconPencil, IconPlus, IconTrash } from '@tabler/icons-react'
-import { useT } from '@hubra/plugin-sdk'
+import { DateField, useT } from '@hubra/plugin-sdk'
 import { useAuth, useToast } from '@hubra/plugin-sdk'
 import { ConfirmModal, Modal, useSubmitOnce } from '@hubra/plugin-sdk'
 import {
@@ -388,21 +388,19 @@ export function RecurringTab() {
             onChange={(v) => set('interval', (v ?? 'monthly') as RecurringInterval)}
             allowDeselect={false}
           />
-          <TextInput
-            type="date"
+          <DateField
             label={t('finance.recurring.start', 'Erstes Datum')}
             description={t(
               'finance.recurring.startHint',
               'Die Daten danach folgen im gewählten Abstand.',
             )}
             value={form.startDate}
-            onChange={(e) => set('startDate', e.currentTarget.value)}
+            onChange={(val) => set('startDate', val)}
           />
-          <TextInput
-            type="date"
+          <DateField
             label={t('finance.recurring.end', 'Letztes Datum (optional)')}
             value={form.endDate ?? ''}
-            onChange={(e) => set('endDate', e.currentTarget.value || null)}
+            onChange={(val) => set('endDate', val || null)}
           />
           <Select
             label={t('finance.form.categoryOptional', 'Kategorie (optional)')}
