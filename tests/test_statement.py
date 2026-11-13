@@ -23,7 +23,14 @@ def mail_texts(db):
     """The shipped German texts of the statement mail."""
     from hubra.core.models.translation import Translation
 
-    texts = json.loads((SEEDS / "de-CH.json").read_text(encoding="utf-8"))
+    # Hubra keeps one seed file per feature (de-CH/<feature>.json) since
+    # hubra#345; older releases have one de-CH.json.
+    files = [SEEDS / "de-CH.json"] if (SEEDS / "de-CH.json").exists() else sorted(
+        (SEEDS / "de-CH").glob("*.json")
+    )
+    texts = {}
+    for path in files:
+        texts.update(json.loads(path.read_text(encoding="utf-8")))
     for key, value in texts.items():
         if "account_statement" in key:
             db.session.add(Translation(locale="de-CH", key=key, value=value))
