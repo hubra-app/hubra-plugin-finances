@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- The monthly statement (Kontoauszug) and the annual accounts PDFs carry the club's letterhead (logo, name, address, contact line, page numbers, primary colour), the same as invoices. Hubra lays them out through `pdf.render` (hubra#332); the plugin no longer runs WeasyPrint itself, and no longer imports a private helper Hubra removed. Needs Hubra 0.2.6 or later (raise `hubra:` in plugin.yaml at release).
+- The monthly statement (Kontoauszug) and the annual accounts PDFs carry the club's letterhead (logo, name, address, contact line, page numbers, primary colour), the same as invoices. Hubra lays them out through `pdf.render` (hubra#332); the plugin no longer runs WeasyPrint itself, and no longer imports a private helper Hubra removed. Needs Hubra 0.2.6 or later.
 - **Kontoauszug jetzt senden** needs the right to book (`finance.transactions.create`, Kassier/in) instead of the overview right, which the board's "Ansehen" has. The button is hidden without it; downloading the PDF stays with the overview right.
 - A closed fiscal year keeps its annual accounts as they were when it was closed: moving a category to another account or renaming or deleting an account later no longer changes it, and the next year compares with those figures. Reopening the year drops the frozen report. Years closed before this version freeze on their first view. New table `finance_year_reports` (run `flask db upgrade`).
 - A budget's owner without the right to read every budget no longer sees the club's bookings in categories outside their budget ("nicht budgetiert").
