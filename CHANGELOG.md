@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.3.0
 
 - The monthly statement (Kontoauszug) and the annual accounts PDFs carry the club's letterhead (logo, name, address, contact line, page numbers, primary colour), the same as invoices. Hubra lays them out through `pdf.render` (hubra#332); the plugin no longer runs WeasyPrint itself, and no longer imports a private helper Hubra removed. Needs Hubra 0.2.6 or later.
 - **Kontoauszug jetzt senden** needs the right to book (`finance.transactions.create`, Kassier/in) instead of the overview right, which the board's "Ansehen" has. The button is hidden without it; downloading the PDF stays with the overview right.
