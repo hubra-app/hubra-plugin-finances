@@ -98,9 +98,16 @@ def test_chf():
 
 
 def test_pdf_download(client, auth_headers, db, books):
-    resp = client.get(
-        "/api/v1/finance/statement.pdf?month=2026-10", headers=auth_headers
-    )
+    import hubra.core.contracts as contracts
+
+    # On the club's letterhead: Hubra lays it out (pdf.render).
+    with patch.object(contracts, "call", wraps=contracts.call) as spy:
+        resp = client.get(
+            "/api/v1/finance/statement.pdf?month=2026-10", headers=auth_headers
+        )
+    (name,), kw = spy.call_args
+    assert name == "pdf.render" and kw["title"].endswith("2026")
+    assert "<html" not in kw["body_html"]
     assert resp.status_code == 200
     assert resp.mimetype == "application/pdf"
     assert resp.data.startswith(b"%PDF")

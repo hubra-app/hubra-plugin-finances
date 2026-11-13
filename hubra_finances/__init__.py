@@ -80,6 +80,8 @@ books = Module(
     consumes={
         "finance.billing_period": ">=1,<2",
         "finance.invoice.set_status": ">=1,<2",
+        # Statements and annual accounts on the club's letterhead.
+        "pdf.render": ">=1,<2",
     },
     tasks=("hubra_finances.tasks",),
     schedule=(

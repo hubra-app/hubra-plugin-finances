@@ -4,6 +4,8 @@ from transactions, opening balances, the year close and its lock."""
 from datetime import date
 from decimal import Decimal
 
+from unittest.mock import patch
+
 import pytest
 
 from hubra.core.models.finance import Transaction, TransactionCategory
@@ -142,7 +144,12 @@ def test_category_mapping_and_accounts(client, auth_headers, books):
 
 
 def test_pdf(client, auth_headers, books):
-    resp = client.get(f"{URL}/annual/2025.pdf")
+    import hubra.core.contracts as contracts
+
+    with patch.object(contracts, "call", wraps=contracts.call) as spy:
+        resp = client.get(f"{URL}/annual/2025.pdf")
+    (name,), kw = spy.call_args
+    assert name == "pdf.render" and kw["title"].endswith("2025")
     assert resp.status_code == 200
     assert resp.data[:4] == b"%PDF"
 
