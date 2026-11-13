@@ -154,23 +154,37 @@ def _month_label(start: date, lang: str) -> str:
     return f"{names[start.month - 1]} {start.year}"
 
 
+def letterhead_pdf(title: str, body_html: str, lang: str) -> bytes:
+    """*body_html* on the club's letterhead, laid out by Hubra (pdf.render)."""
+    import base64
+
+    from hubra.core.contracts import SYSTEM, call
+
+    # SYSTEM: the caller (route or job) already checked who may read it.
+    out = call(
+        "pdf.render", title=title[:200], body_html=body_html, lang=lang, actor=SYSTEM
+    )
+    return base64.b64decode(out["pdf_base64"])
+
+
 def statement_pdf(data: dict, lang: str = DEFAULT_LANG) -> bytes:
-    from weasyprint import HTML
-
     from hubra.core.services.mail_i18n import get_mail_translator
-    from hubra.core.services.qr_bill import _no_fetch
 
+    t = get_mail_translator(lang)
+    month = _month_label(data["start"], lang)
     html = render(
         "statement.html",
-        t=get_mail_translator(lang),
+        t=t,
         lang=lang,
         d=data,
-        month=_month_label(data["start"], lang),
+        month=month,
         chf=chf,
         fmt_date=lambda day: mail_date(day, lang),
         created=mail_date(date.today(), lang),
     )
-    return HTML(string=html, url_fetcher=_no_fetch()).write_pdf()
+    return letterhead_pdf(
+        f"{t('mail.email.account_statement.title')} {month}", html, lang
+    )
 
 
 def send_statement(start: date, to_email: str, lang: str = DEFAULT_LANG) -> dict:

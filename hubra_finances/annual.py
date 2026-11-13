@@ -725,17 +725,15 @@ def _guard_closed_years(session, _flush_context, _instances) -> None:
 
 
 def annual_pdf(report: dict, lang: str) -> bytes:
-    from weasyprint import HTML
-
-    from hubra_finances.statement import chf
+    from hubra_finances.statement import chf, letterhead_pdf
     from hubra.core.services.email import club_display_name
     from hubra.core.services.mail_format import mail_date
     from hubra.core.services.mail_i18n import get_mail_translator
-    from hubra.core.services.qr_bill import _no_fetch
 
+    t = get_mail_translator(lang)
     html = render(
         "annual.html",
-        t=get_mail_translator(lang),
+        t=t,
         lang=lang,
         r=report,
         club=club_display_name(),
@@ -743,4 +741,6 @@ def annual_pdf(report: dict, lang: str) -> bytes:
         fmt_date=lambda day: mail_date(date.fromisoformat(day), lang),
         created=mail_date(date.today(), lang),
     )
-    return HTML(string=html, url_fetcher=_no_fetch()).write_pdf()
+    return letterhead_pdf(
+        f"{t('mail.email.annual_accounts.title')} {report.get('year', '')}".strip(), html, lang
+    )

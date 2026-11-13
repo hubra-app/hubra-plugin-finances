@@ -1,32 +1,14 @@
-<!DOCTYPE html>
-<html lang="{{ 'en' if lang.startswith('en') else 'de' }}">
-<head>
-<meta charset="utf-8">
+{# The body only: Hubra puts it on the club's letterhead (pdf.render),
+   which sets the page, the fonts and the page numbers. #}
 <style>
-  @page {
-    size: A4;
-    margin: 16mm 15mm 18mm;
-    @bottom-right {
-      content: counter(page) " / " counter(pages);
-      font-size: 8pt;
-      color: #6b7480;
-    }
-  }
-  * { box-sizing: border-box; }
-  body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 9.5pt;
-    color: #181818;
-    margin: 0;
-  }
   .header {
     border-bottom: 2px solid #e3eae6;
     padding-bottom: 5mm;
     margin-bottom: 6mm;
   }
-  h1 { font-size: 17pt; margin: 0 0 1.5mm; }
+  .header h1 { margin: 0 0 1.5mm; }
   .sub { color: #6b7480; font-size: 10pt; margin: 0; }
-  h2 { font-size: 11pt; margin: 7mm 0 2.5mm; }
+  .fin h2 { margin: 7mm 0 2.5mm; }
   .tiles { display: flex; gap: 3mm; }
   .tile {
     flex: 1;
@@ -65,9 +47,9 @@
     margin-right: 1.5mm;
   }
   .footer { margin-top: 8mm; color: #6b7480; font-size: 8pt; }
+  .fin { font-size: 9.5pt; }
 </style>
-</head>
-<body>
+<div class="fin">
   <div class="header">
     <h1>{{ t('mail.email.account_statement.title') }} {{ month }}</h1>
     <p class="sub">{{ d.club_name }} · {{ fmt_date(d.start) }} – {{ fmt_date(d.end) }}</p>
@@ -174,5 +156,4 @@
   </table>
 
   <p class="footer">{{ t('mail.email.account_statement.footer', date=created) }}</p>
-</body>
-</html>
+</div>
