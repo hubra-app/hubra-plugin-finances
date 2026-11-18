@@ -10,7 +10,7 @@ import {
   Text,
   TextInput,
 } from '@mantine/core'
-import { useT } from '@hubra/plugin-sdk'
+import { DateField, useT } from '@hubra/plugin-sdk'
 import { Modal } from '@hubra/plugin-sdk'
 import { useAuth, useToast } from '@hubra/plugin-sdk'
 import type { Transaction, TransactionCategory } from './types'
@@ -216,11 +216,10 @@ export function TransactionFormModal({
             placeholder="50.00"
             error={show('amount')}
           />
-          <TextInput
-            type="date"
+          <DateField
             label={t('common.date', 'Datum')}
             value={values.date}
-            onChange={(e) => set('date', e.currentTarget.value)}
+            onChange={(val) => set('date', val)}
             error={show('date')}
           />
           <Select
